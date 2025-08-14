@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 
-// let wasmModule: any = null;
+import init, { format } from '@wasm-fmt/clang-format';
+
 let isInitialized = false;
 
 interface FormatRequest {
@@ -17,42 +18,21 @@ interface FormatResponse {
   duration?: number;
 }
 
-// Mock WASM module for now - will be replaced with actual clang-format WASM
-class MockClangFormatter {
-  async format(code: string, config: string, _language: 'c' | 'cpp'): Promise<string> {
-    // Simple mock formatting - just basic indentation
-    const lines = code.split('\n');
-    let indent = 0;
-    const indentSize = config.includes('IndentWidth: 2') ? 2 : 4;
-    
-    return lines.map(line => {
-      const trimmed = line.trim();
-      if (trimmed.includes('}')) indent = Math.max(0, indent - 1);
-      const result = ' '.repeat(indent * indentSize) + trimmed;
-      if (trimmed.includes('{')) indent++;
-      return result;
-    }).join('\n');
-  }
-}
-
-let formatter: MockClangFormatter;
-
 async function initialize() {
   if (isInitialized) return;
   
   try {
-    // TODO: Load actual clang-format WASM
-    formatter = new MockClangFormatter();
+    await init();
     isInitialized = true;
     
     self.postMessage({ 
       type: 'initialized', 
-      message: 'Formatter initialized successfully' 
+      message: 'Clang-format WASM initialized successfully' 
     });
   } catch (error) {
     self.postMessage({ 
       type: 'error', 
-      error: `Failed to initialize formatter: ${error}` 
+      error: `Failed to initialize clang-format WASM: ${error}` 
     });
   }
 }
@@ -65,10 +45,10 @@ async function formatCode(request: FormatRequest) {
       await initialize();
     }
 
-    const formatted = await formatter.format(
+    const formatted = format(
       request.code, 
-      request.yamlConfig, 
-      request.language
+      request.yamlConfig,
+      request.language === 'c' ? 'c' : 'cpp'
     );
     
     const duration = performance.now() - startTime;

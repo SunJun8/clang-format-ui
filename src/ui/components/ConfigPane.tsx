@@ -64,25 +64,25 @@ const ConfigInput: React.FC<{
           checked={value}
           onChange={(e) => onChange(e.target.checked)}
         />
-        <div className="w-11 h-6 bg-base-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-primary peer-checked:to-secondary"></div>
+        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
       </label>
     );
   }
 
   if (typeof value === 'number') {
     return (
-      <div className="flex items-center gap-3 bg-base-100/50 rounded-lg p-2">
+      <div className="flex items-center space-x-3">
         <input
           type="range"
-          className="range range-xs range-primary flex-1"
           min={0}
           max={name === 'IndentWidth' || name === 'TabWidth' ? 8 : 120}
           value={value}
           onChange={(e) => onChange(parseInt(e.target.value))}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
         />
         <input
           type="number"
-          className="input input-sm input-bordered w-16 text-center font-mono"
+          className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={value}
           onChange={(e) => onChange(parseInt(e.target.value) || 0)}
         />
@@ -95,12 +95,12 @@ const ConfigInput: React.FC<{
     if (enumValues) {
       return (
         <select
-          className="select select-sm select-bordered w-full font-mono"
+          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         >
           {enumValues.map((option) => (
-            <option key={option} value={option} className="font-mono">
+            <option key={option} value={option}>
               {option}
             </option>
           ))}
@@ -111,7 +111,7 @@ const ConfigInput: React.FC<{
     return (
       <input
         type="text"
-        className="input input-sm input-bordered w-full font-mono"
+        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -148,74 +148,80 @@ const ConfigCategory: React.FC<{
   isOpen: boolean;
   onToggle: () => void;
 }> = ({ title, keys, config, onChange, isOpen, onToggle }) => {
-  const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-      Core: '⚙️',
-      Indent: '↔️',
-      Break: '🔨',
-      Align: '📏',
-      Penalty: '⚡',
-      Other: '🌟',
-    };
-    return icons[category] || '📋';
-  };
-
   return (
-    <div className={`collapse collapse-arrow bg-base-100/50 backdrop-blur-sm border border-base-300/30 rounded-lg transition-all duration-300 ${isOpen ? 'mb-4' : 'mb-2'}`}>
-      <input
-        type="checkbox"
-        className="peer"
-        checked={isOpen}
-        onChange={onToggle}
-      />
-      <div className="collapse-title text-lg font-semibold text-base-content/90 peer-checked:text-primary flex items-center gap-2"
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
-        <span className="text-xl">{getCategoryIcon(title)}</span>
-        {title}
-        <span className="ml-auto text-sm font-normal text-base-content/60">
-          {keys.length} settings
-        </span>
-      </div>
-      
-      <div className="collapse-content bg-base-100/30 backdrop-blur-sm rounded-b-lg p-4 space-y-4"
-      >
-        {keys.map((key) => {
-          const value = config[key as keyof typeof config];
-          if (value === undefined) return null;
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+            <span className="text-lg">{getCategoryIcon(title)}</span>
+          </div>
+          <div className="text-left">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{keys.length} settings</p>
+          </div>
+        </div>
+        <svg
+          className={`w-5 h-5 text-gray-400 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-          return (
-            <div key={key} className="form-control p-3 bg-base-100/50 rounded-lg hover:bg-base-200/50 transition-all duration-200"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <label className="label cursor-pointer p-0">
-                  <span className="label-text font-medium text-base-content/90 text-sm">{key}</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <ConfigInput
-                    name={key}
-                    value={value}
-                    onChange={(newValue) => onChange(key, newValue)}
-                  />
+      {isOpen && (
+        <div className="p-4 space-y-4 bg-white dark:bg-gray-900">
+          {keys.map((key) => {
+            const value = config[key as keyof typeof config];
+            if (value === undefined) return null;
+
+            return (
+              <div key={key} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {key}
+                  </label>
                   <button
-                    className="btn btn-ghost btn-xs btn-circle hover:bg-base-300/50 transition-all duration-200"
+                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
                     onClick={() => {
                       const defaultConfig = configStore.getAll();
                       onChange(key, defaultConfig[key as keyof typeof defaultConfig]);
                     }}
                     title="Reset to default"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                   </button>
                 </div>
+                <ConfigInput
+                  name={key}
+                  value={value}
+                  onChange={(newValue) => onChange(key, newValue)}
+                />
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
+};
+
+const getCategoryIcon = (category: string) => {
+  const icons: Record<string, string> = {
+    Core: '⚙️',
+    Indent: '↔️',
+    Break: '🔨',
+    Align: '📏',
+    Penalty: '⚡',
+    Other: '🌟',
+  };
+  return icons[category] || '📋';
 };
 
 export const ConfigPane: React.FC = () => {
@@ -255,39 +261,27 @@ export const ConfigPane: React.FC = () => {
   const diff = configStore.diff();
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="navbar bg-base-100/60 backdrop-blur-sm border-b border-base-300/30 px-4 py-3"
-      >
-        <div className="flex-1 flex items-center gap-3">
-          <div className="w-2 h-6 bg-gradient-to-b from-accent to-primary rounded-full"></div>
-          <span className="text-lg font-semibold text-base-content/90">Configuration</span>
-          {diff.isModified && (
-            <span className="ml-2 text-sm text-info bg-info/10 px-2 py-1 rounded-md flex items-center gap-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.037-.502.068-.75.097m0 5.714v5.714c0 .597.237 1.17.659 1.591L15 21.75m-9.75-18.75c-.251.037-.502.068-.75.097m11.25-4.125c.251.037.502.068.75.097m0 5.714v5.714c0 .597.237 1.17.659 1.591L9 21.75M15 3.104c.251.037.502.068.75.097m0 5.714v5.714c0 .597.237 1.17.659 1.591L21 14.5" />
-              </svg>
-              {diff.changes.length} modified
-            </span>
-          )}
-        </div>
-        <div className="flex-none">
-          <button 
-            className="btn btn-sm btn-ghost gap-2" 
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Configuration</h2>
+            {diff.isModified && (
+              <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                {diff.changes.length} modified
+              </span>
+            )}
+          </div>
+          <button
+            className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             onClick={handleResetAll}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-            </svg>
             Reset All
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin"
-      >
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {Object.entries(CONFIG_CATEGORIES).map(([category, keys]) => (
           <ConfigCategory
             key={category}

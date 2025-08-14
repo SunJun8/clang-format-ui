@@ -1,34 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { ReactNode } from 'react';
 
 interface SplitPaneProps {
   direction: 'horizontal' | 'vertical';
-  children: ReactNode;
+  children: React.ReactNode[];
   className?: string;
-  initialSplit?: number;
-  minSize?: number;
-  maxSize?: number;
+  defaultSizes?: number[];
+  minSizes?: number[];
 }
 
 export const SplitPane: React.FC<SplitPaneProps> = ({
   direction,
   children,
   className = '',
-  initialSplit = 50,
-  minSize = 10,
-  maxSize = 90,
+  defaultSizes,
+  minSizes = [100, 100]
 }) => {
-  const [split, setSplit] = useState(initialSplit);
+  const [sizes, setSizes] = useState<number[]>(defaultSizes || [50, 50]);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const separatorRef = useRef<HTMLDivElement>(null);
 
-  const childrenArray = React.Children.toArray(children);
-  if (childrenArray.length !== 2) {
-    throw new Error('SplitPane must have exactly 2 children');
-  }
-
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDragging(true);
   };
 
@@ -36,18 +28,16 @@ export const SplitPane: React.FC<SplitPaneProps> = ({
     if (!isDragging || !containerRef.current) return;
 
     const containerRect = containerRef.current.getBoundingClientRect();
-    const containerSize = direction === 'horizontal' 
-      ? containerRect.width 
-      : containerRect.height;
+    const containerSize = direction === 'horizontal' ? containerRect.width : containerRect.height;
+    const position = direction === 'horizontal' ? e.clientX - containerRect.left : e.clientY - containerRect.top;
     
-    const mousePosition = direction === 'horizontal'
-      ? e.clientX - containerRect.left
-      : e.clientY - containerRect.top;
-
-    const newSplit = (mousePosition / containerSize) * 100;
-    const clampedSplit = Math.max(minSize, Math.min(maxSize, newSplit));
+    const firstPaneSize = Math.max(minSizes[0], Math.min(position, containerSize - minSizes[1]));
+    const secondPaneSize = containerSize - firstPaneSize;
     
-    setSplit(clampedSplit);
+    const firstPanePercent = (firstPaneSize / containerSize) * 100;
+    const secondPanePercent = (secondPaneSize / containerSize) * 100;
+    
+    setSizes([firstPanePercent, secondPanePercent]);
   };
 
   const handleMouseUp = () => {
@@ -58,83 +48,41 @@ export const SplitPane: React.FC<SplitPaneProps> = ({
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = direction === 'horizontal' ? 'col-resize' : 'row-resize';
-      document.body.style.userSelect = 'none';
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
     }
+  }, [isDragging]);
 
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-  }, [isDragging, direction]);
-
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    height: '100%',
-    width: '100%',
-  };
-
-  const firstPaneStyle: React.CSSProperties = {
-    [direction === 'horizontal' ? 'width' : 'height']: `${split}%`,
-    [direction === 'horizontal' ? 'height' : 'width']: '100%',
-    overflow: 'hidden',
-    position: 'relative',
-  };
-
-  const secondPaneStyle: React.CSSProperties = {
-    [direction === 'horizontal' ? 'width' : 'height']: `${100 - split}%`,
-    [direction === 'horizontal' ? 'height' : 'width']: '100%',
-    overflow: 'hidden',
-    position: 'relative',
-  };
-
-  const separatorStyle: React.CSSProperties = {
-    backgroundColor: isDragging ? 'hsl(var(--p))' : 'hsl(var(--b3))',
-    cursor: direction === 'horizontal' ? 'col-resize' : 'row-resize',
-    [direction === 'horizontal' ? 'width' : 'height']: '6px',
-    [direction === 'horizontal' ? 'height' : 'width']: '100%',
-    position: 'relative',
-    transition: 'all 0.2s ease',
-    zIndex: 10,
-    borderRadius: '3px',
-    opacity: isDragging ? 1 : 0.5,
-  };
-
-  const handleStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: direction === 'horizontal' ? '2px' : '100%',
-    height: direction === 'horizontal' ? '100%' : '2px',
-    backgroundColor: isDragging ? 'hsl(var(--p))' : 'transparent',
-    borderRadius: '1px',
-    transition: 'all 0.2s ease',
-  };
+  const flexStyle = direction === 'horizontal' 
+    ? { flexDirection: 'row' as const }
+    : { flexDirection: 'column' as const };
 
   return (
     <div
       ref={containerRef}
-      className={`${className} ${isDragging ? 'select-none' : ''} transition-all duration-300`}
-      style={containerStyle}
+      className={`flex ${className}`}
+      style={flexStyle}
     >
-      <div style={firstPaneStyle}>
-        {childrenArray[0]}
+      <div style={{ flex: `${sizes[0]} 1 0` }}>
+        {children[0]}
       </div>
       
       <div
-        ref={separatorRef}
-        style={separatorStyle}
+        className={`
+          ${direction === 'horizontal' 
+            ? 'w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 cursor-col-resize' 
+            : 'h-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 cursor-row-resize'
+          }
+          ${isDragging ? 'bg-blue-500' : ''}
+          transition-colors duration-200
+        `}
         onMouseDown={handleMouseDown}
-        className={`hover:bg-[hsl(var(--p))] hover:opacity-100 hover:shadow-[0_0_10px_rgba(99,102,241,0.3)]`}
-      >
-        <div style={handleStyle} className="opacity-0 group-hover:opacity-100" />
-      </div>
+      />
       
-      <div style={secondPaneStyle}>
-        {childrenArray[1]}
+      <div style={{ flex: `${sizes[1]} 1 0` }}>
+        {children[1]}
       </div>
     </div>
   );
