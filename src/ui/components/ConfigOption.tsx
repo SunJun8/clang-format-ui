@@ -36,19 +36,24 @@ const ConfigOption: React.FC<ConfigOptionProps> = ({
       case 'number':
         return (
           <input
-            type="range"
+            type="number"
             min={min ?? 0}
             max={max ?? 100}
             value={value as number}
-            onChange={(e) => onChange(parseInt(e.target.value))}
-            className="range range-primary range-xs w-full"
+            onChange={(e) => {
+              const newValue = parseInt(e.target.value)
+              if (!isNaN(newValue)) {
+                onChange(newValue)
+              }
+            }}
+            className="input input-bordered input-sm w-20 text-center"
           />
         )
       
       case 'select':
         return (
           <select
-            className="select select-bordered select-sm w-full min-w-0"
+            className="select select-bordered select-sm w-32 min-w-0"
             value={value as string}
             onChange={(e) => onChange(e.target.value)}
           >
@@ -67,30 +72,14 @@ const ConfigOption: React.FC<ConfigOptionProps> = ({
 
   return (
     <div className="form-control">
-      <label className="label py-1">
-        <span className="label-text text-sm leading-tight truncate">{label}</span>
-      </label>
-      {type === 'boolean' ? (
-        <div className="flex items-center justify-between min-w-0">
-          <span className="text-sm opacity-70 truncate mr-2">
-            {value ? 'Enabled' : 'Disabled'}
-          </span>
-          <div className="flex-shrink-0">
-            {renderControl()}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {type === 'number' && (
-            <div className="flex justify-between text-xs">
-              <span>{min ?? 0}</span>
-              <span className="font-semibold">{value}</span>
-              <span>{max ?? 100}</span>
-            </div>
-          )}
+      <div className="flex items-center justify-between min-w-0">
+        <label className="label py-1 cursor-pointer">
+          <span className="label-text text-sm leading-tight truncate">{label}</span>
+        </label>
+        <div className="flex-shrink-0">
           {renderControl()}
         </div>
-      )}
+      </div>
     </div>
   )
 }
