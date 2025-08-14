@@ -1,111 +1,133 @@
-export interface FormatResult {
-  formatted: string;
-  duration: number;
-  error?: string;
+// Implementation of clang-format using WASM
+import init, { format } from '@wasm-fmt/clang-format'
+
+export interface ClangFormatConfig {
+  // Core settings
+  BasedOnStyle: 'LLVM' | 'Google' | 'Chromium' | 'Mozilla' | 'WebKit' | 'Microsoft' | 'GNU'
+  IndentWidth: number
+  TabWidth: number
+  UseTab: boolean
+  BreakBeforeBraces: 'Attach' | 'Linux' | 'Mozilla' | 'Stroustrup' | 'Allman' | 'Whitesmiths' | 'GNU' | 'WebKit' | 'Custom'
+  AllowShortIfStatementsOnASingleLine: boolean
+  AllowShortLoopsOnASingleLine: boolean
+  ColumnLimit: number
+  
+  // Indent settings
+  IndentCaseLabels: boolean
+  IndentPPDirectives: 'None' | 'AfterHash' | 'BeforeHash'
+  
+  // Break settings
+  AlwaysBreakAfterDefinitionReturnType: boolean
+  AlwaysBreakTemplateDeclarations: boolean
+  
+  // Align settings
+  AlignAfterOpenBracket: 'Align' | 'DontAlign' | 'AlwaysBreak'
+  AlignConsecutiveAssignments: boolean
+  
+  // Penalty settings
+  PenaltyBreakBeforeFirstCallParameter: number
+  PenaltyBreakComment: number
+  
+  // Other settings
+  SpacesBeforeTrailingComments: number
+  AllowShortFunctionsOnASingleLine: boolean
 }
 
-export interface FormatRequest {
-  id: string;
-  code: string;
-  yamlConfig: string;
-  language: 'c' | 'cpp';
+export const clangFormatConfig: ClangFormatConfig = {
+  // Core settings
+  BasedOnStyle: 'LLVM',
+  IndentWidth: 2,
+  TabWidth: 2,
+  UseTab: false,
+  BreakBeforeBraces: 'Attach',
+  AllowShortIfStatementsOnASingleLine: false,
+  AllowShortLoopsOnASingleLine: false,
+  ColumnLimit: 80,
+  
+  // Indent settings
+  IndentCaseLabels: false,
+  IndentPPDirectives: 'None',
+  
+  // Break settings
+  AlwaysBreakAfterDefinitionReturnType: false,
+  AlwaysBreakTemplateDeclarations: false,
+  
+  // Align settings
+  AlignAfterOpenBracket: 'Align',
+  AlignConsecutiveAssignments: false,
+  
+  // Penalty settings
+  PenaltyBreakBeforeFirstCallParameter: 100,
+  PenaltyBreakComment: 50,
+  
+  // Other settings
+  SpacesBeforeTrailingComments: 2,
+  AllowShortFunctionsOnASingleLine: false
 }
 
-class Formatter {
-  private worker: Worker | null = null;
-  private pendingRequests = new Map<string, {
-    resolve: (value: FormatResult) => void;
-    reject: (error: string) => void;
-  }>();
+let initialized = false
 
-  constructor() {
-    this.initializeWorker();
+// Initialize the WASM module
+const initialize = async () => {
+  if (!initialized) {
+    await init()
+    initialized = true
   }
+}
 
-  private initializeWorker() {
-    try {
-      // Create worker from the worker file
-      this.worker = new Worker(new URL('../worker/formatter.worker.ts', import.meta.url), {
-        type: 'module',
-      });
-
-      this.worker.onmessage = (event: MessageEvent) => {
-        const { id, result, error, duration } = event.data;
-        
-        if (this.pendingRequests.has(id)) {
-          const { resolve, reject } = this.pendingRequests.get(id)!;
-          this.pendingRequests.delete(id);
-          
-          if (error) {
-            reject(error);
-          } else {
-            resolve({
-              formatted: result,
-              duration: duration || 0,
-            });
-          }
-        }
-      };
-
-      this.worker.onerror = (error) => {
-        console.error('Worker error:', error);
-        // Reject all pending requests
-        this.pendingRequests.forEach(({ reject }) => {
-          reject('Worker error occurred');
-        });
-        this.pendingRequests.clear();
-      };
-
-      // Initialize the worker
-      this.worker.postMessage({ type: 'init' });
-    } catch (error) {
-      console.error('Failed to initialize worker:', error);
-    }
-  }
-
-  async format(code: string, configYaml: string, language: 'c' | 'cpp' = 'cpp'): Promise<FormatResult> {
-    if (!this.worker) {
-      return {
-        formatted: code,
-        duration: 0,
-        error: 'Formatter not initialized',
-      };
-    }
-
-    const id = Math.random().toString(36).substring(2, 15);
+// Convert config to YAML string for clang-format
+const configToYAML = (config: ClangFormatConfig): string => {
+  let yaml = '{'
+  const entries = Object.entries(config)
+  for (let i = 0; i < entries.length; i++) {
+    const [key, value] = entries[i]
+    if (i > 0) yaml += ', '
     
-    return new Promise((resolve, reject) => {
-      this.pendingRequests.set(id, { resolve, reject });
-      
-      const request: FormatRequest = {
-        id,
-        code,
-        yamlConfig: configYaml,
-        language,
-      };
-      
-      this.worker!.postMessage({
-        type: 'format',
-        ...request,
-      });
-      
-      // Set timeout for requests
-      setTimeout(() => {
-        if (this.pendingRequests.has(id)) {
-          this.pendingRequests.delete(id);
-          reject('Formatting request timed out');
-        }
-      }, 10000); // 10 second timeout
-    });
-  }
-
-  terminate() {
-    if (this.worker) {
-      this.worker.terminate();
-      this.worker = null;
+    if (typeof value === 'boolean') {
+      yaml += `${key}: ${value ? 'true' : 'false'}`
+    } else if (typeof value === 'number') {
+      yaml += `${key}: ${value}`
+    } else {
+      yaml += `${key}: ${value}`
     }
-    this.pendingRequests.clear();
+  }
+  yaml += '}'
+  return yaml
+}
+
+// Formatter function using WASM
+export const formatCode = async (code: string, config: ClangFormatConfig): Promise<string> => {
+  // Initialize the WASM module if not already done
+  await initialize()
+  
+  try {
+    // Convert config to YAML format as required by clang-format
+    const configYAML = configToYAML(config)
+    
+    // Format the code using the WASM module
+    const formattedCode = format(code, 'main.cpp', configYAML)
+    return formattedCode
+  } catch (error) {
+    console.error('Formatting error:', error)
+    // Fallback to original code if formatting fails
+    return code
   }
 }
 
-export const formatter = new Formatter();
+// Convert config to YAML format for export
+export const configToYaml = (config: ClangFormatConfig): string => {
+  let yaml = ''
+  for (const [key, value] of Object.entries(config)) {
+    if (typeof value === 'boolean') {
+      yaml += `${key}: ${value ? 'true' : 'false'}
+`
+    } else if (typeof value === 'number') {
+      yaml += `${key}: ${value}
+`
+    } else {
+      yaml += `${key}: ${value}
+`
+    }
+  }
+  return yaml.trim()
+}

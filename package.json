@@ -1,38 +1,31 @@
 {
   "name": "clang-format-ui",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@wasm-fmt/clang-format": "^20.1.7",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "monaco-editor": "^0.50.0",
+    "monaco-themes": "^0.4.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "yaml": "^2.4.2",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "@eslint/js": "^9.33.0",
-    "@monaco-editor/react": "^4.7.0",
-    "@types/node": "^24.2.1",
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react": "^5.0.0",
-    "autoprefixer": "^10.4.21",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
     "daisyui": "^5.0.50",
-    "eslint": "^9.33.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.3.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.11",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.39.1",
-    "vite": "^7.1.2",
-    "yaml": "^2.8.1",
-    "zustand": "^5.0.7"
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
   }
 }

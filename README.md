@@ -124,15 +124,15 @@ clang-format-ui/
 
 ## 📋 Development Checklist
 
-- [x] Project structure setup
-- [x] Core services implementation
-- [x] UI layout with split panes
-- [x] Monaco Editor integration
-- [x] Configuration management
-- [x] Real-time preview
-- [x] Export functionality
-- [x] Responsive design
-- [x] Offline support
+- [ ] Project structure setup
+- [ ] Core services implementation
+- [ ] UI layout with split panes
+- [ ] Monaco Editor integration
+- [ ] Configuration management
+- [ ] Real-time preview
+- [ ] Export functionality
+- [ ] Responsive design
+- [ ] Offline support
 - [ ] Real clang-format WASM integration (future)
 - [ ] Additional clang-format versions (future)
 - [ ] Configuration presets (future)
@@ -140,8 +140,6 @@ clang-format-ui/
 
 ## 🚦 Performance
 
-- **Bundle Size**: ~324KB (gzipped: ~102KB)
-- **Cold Start**: <2 seconds
 - **Formatting**: <300ms for typical code
 - **Offline Ready**: Zero network dependencies
 

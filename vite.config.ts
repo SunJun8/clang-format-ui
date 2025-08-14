@@ -1,24 +1,28 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: './',
+  base: './', // Required for file:// protocol support
   build: {
-    target: 'es2020',
     outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        manualChunks: undefined,
-      },
-    },
+        manualChunks: {
+          monaco: ['monaco-editor'],
+          react: ['react', 'react-dom'],
+          vendor: ['zustand', 'yaml'],
+          clangFormat: ['@wasm-fmt/clang-format']
+        }
+      }
+    }
   },
   worker: {
-    format: 'es',
+    format: 'es'
   },
   optimizeDeps: {
-    include: ['monaco-editor'],
-  },
+    exclude: ['@wasm-fmt/clang-format']
+  }
 })
