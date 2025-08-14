@@ -1,0 +1,16 @@
+{
+  "name": "Clang-Format Web UI",
+  "short_name": "CFWUI",
+  "description": "Zero-backend clang-format configuration tool",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e293b",
+  "icons": [
+    {
+      "src": "./vite.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    }
+  ]
+}
