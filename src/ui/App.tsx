@@ -5,7 +5,6 @@ import EditorPane from './components/EditorPane'
 import ConfigPanel from './components/ConfigPanel'
 import Header from './components/Header'
 import { MONACO_THEMES } from '../core/themes'
-import { updateEditorTheme } from './hooks/useMonacoEditor'
 
 const App: React.FC = () => {
   const { config } = useConfigStore()
@@ -47,11 +46,7 @@ return 0;
     return () => clearTimeout(timer)
   }, [sourceCode, config])
 
-  // Update editor theme when theme changes
-  useEffect(() => {
-    updateEditorTheme(editorTheme)
-  }, [editorTheme])
-
+  
   const handleDownload = () => {
     const yamlContent = configToYaml(config)
     const blob = new Blob([yamlContent], { type: 'text/yaml' })
@@ -169,6 +164,7 @@ return 0;
                 language={language}
                 value={sourceCode}
                 onChange={setSourceCode}
+                theme={editorTheme}
               />
             </div>
             
@@ -178,6 +174,7 @@ return 0;
                 language={language}
                 value={formattedCode}
                 readOnly
+                theme={editorTheme}
               />
             </div>
           </div>
