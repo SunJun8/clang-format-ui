@@ -4,10 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: './', // Required for file:// protocol support
+  base: process.env.GITHUB_PAGES ? '/clang-format-ui/' : './', // Support both GitHub Pages and local development
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    sourcemap: true, // Enable sourcemaps for debugging
     rollupOptions: {
       output: {
         manualChunks: {
@@ -24,5 +25,8 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['@wasm-fmt/clang-format']
+  },
+  define: {
+    global: 'globalThis', // Fix for some WASM modules
   }
 })
