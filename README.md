@@ -8,6 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Monaco Editor](https://img.shields.io/badge/Monaco%20Editor-0.50.x-purple.svg)](https://microsoft.github.io/monaco-editor/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Deployed-blue.svg)](https://sunjun8.github.io/clang-format-ui/)
 
 </div>
 
