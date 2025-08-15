@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import * as monaco from 'monaco-editor'
-import { useMonacoEditor, updateEditorTheme } from '../hooks/useMonacoEditor'
+import { useMonacoEditor } from '../hooks/useMonacoEditor'
 
 export interface EditorPaneRef {
   getEditor: () => monaco.editor.IStandaloneCodeEditor | null
@@ -12,7 +12,6 @@ interface EditorPaneProps {
   value: string
   onChange?: (value: string) => void
   readOnly?: boolean
-  theme?: string
 }
 
 const EditorPane = forwardRef<EditorPaneRef, EditorPaneProps>(({
@@ -20,14 +19,12 @@ const EditorPane = forwardRef<EditorPaneRef, EditorPaneProps>(({
   language,
   value,
   onChange,
-  readOnly = false,
-  theme = 'GitHub Dark'
+  readOnly = false
 }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null)
   const { editorRef: monacoEditorRef } = useMonacoEditor(editorRef as React.RefObject<HTMLDivElement>, {
     value,
     language: language === 'c' ? 'c' : 'cpp',
-    theme,
     readOnly,
     automaticLayout: true,
     minimap: { enabled: false },
@@ -74,13 +71,6 @@ const EditorPane = forwardRef<EditorPaneRef, EditorPaneProps>(({
       }
     }
   }, [value, language])
-
-  // 监听主题变化
-  useEffect(() => {
-    if (monacoEditorRef.current && theme) {
-      updateEditorTheme(theme)
-    }
-  }, [theme])
 
   return (
     <div className="flex flex-col h-full border border-base-300 rounded-lg overflow-hidden">

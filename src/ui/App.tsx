@@ -4,7 +4,6 @@ import { formatCode, configToYaml } from '../core/formatter'
 import EditorPane, { EditorPaneRef } from './components/EditorPane'
 import ConfigPanel from './components/ConfigPanel'
 import Header from './components/Header'
-import { MONACO_THEMES } from '../core/themes'
 import { getDefaultExample } from './examples'
 
 const App: React.FC = () => {
@@ -13,9 +12,10 @@ const App: React.FC = () => {
   const [formattedCode, setFormattedCode] = useState<string>('')
   const [language, setLanguage] = useState<'cpp' | 'c'>('cpp')
   const [exampleLevel, setExampleLevel] = useState<'basic' | 'advanced'>('basic')
-  const [editorTheme, setEditorTheme] = useState<string>('GitHub Dark')
   const [leftWidth, setLeftWidth] = useState<number>(66.66) // 默认左侧占2/3宽度
+  const [sourceWidth, setSourceWidth] = useState<number>(50) // Source Code在左侧区域中占50%宽度
   const [isDragging, setIsDragging] = useState<boolean>(false)
+  const [isDraggingInner, setIsDraggingInner] = useState<boolean>(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const sourceEditorRef = useRef<EditorPaneRef>(null)
   const formattedEditorRef = useRef<EditorPaneRef>(null)
@@ -107,7 +107,7 @@ const App: React.FC = () => {
     navigator.clipboard.writeText(yamlContent)
   }
 
-  // 拖动功能实现
+  // 外部拖动条功能（主区域分割）
   const startDrag = (e: React.MouseEvent) => {
     e.preventDefault()
     setIsDragging(true)
@@ -126,6 +126,28 @@ const App: React.FC = () => {
     setIsDragging(false)
   }
 
+  // 内部拖动条功能（编辑器分割）
+  const startInnerDrag = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingInner(true)
+  }
+
+  const onInnerDrag = (e: MouseEvent) => {
+    if (!isDraggingInner || !containerRef.current) return
+    
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const leftContainerWidth = containerRect.width * (leftWidth / 100)
+    const x = e.clientX - containerRect.left
+    const relativeX = x - (containerRect.width * (100 - leftWidth) / 100) // 减去右侧配置面板宽度
+    const percentage = Math.min(Math.max((relativeX / leftContainerWidth) * 100, 25), 75) // 限制在25%-75%之间
+    setSourceWidth(percentage)
+  }
+
+  const stopInnerDrag = () => {
+    setIsDraggingInner(false)
+  }
+
   // 添加事件监听器
   useEffect(() => {
     if (isDragging) {
@@ -139,6 +161,18 @@ const App: React.FC = () => {
     }
   }, [isDragging])
 
+  useEffect(() => {
+    if (isDraggingInner) {
+      document.addEventListener('mousemove', onInnerDrag)
+      document.addEventListener('mouseup', stopInnerDrag)
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', onInnerDrag)
+      document.removeEventListener('mouseup', stopInnerDrag)
+    }
+  }, [isDraggingInner])
+
   return (
     <div className="flex flex-col h-screen bg-base-200">
       <Header 
@@ -149,9 +183,9 @@ const App: React.FC = () => {
       <div 
         ref={containerRef}
         className="flex flex-1 overflow-hidden"
-        style={{ cursor: isDragging ? 'col-resize' : 'default' }}
+        style={{ cursor: isDragging || isDraggingInner ? 'col-resize' : 'default' }}
       >
-        {/* Left side: Source and Formatted Code editors stacked vertically */}
+        {/* Left side: Source and Formatted Code editors side by side */}
         <div 
           className="flex flex-col h-full p-4"
           style={{ width: `${leftWidth}%` }}
@@ -212,41 +246,40 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center mb-4">
-            <span className="mr-4 font-semibold">Theme:</span>
-            <div className="form-control w-full max-w-xs">
-              <select 
-                className="select select-bordered select-sm"
-                value={editorTheme}
-                onChange={(e) => setEditorTheme(e.target.value)}
-              >
-                {MONACO_THEMES.map(theme => (
-                  <option key={theme} value={theme}>{theme}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex-1 mb-4">
+          <div className="flex flex-1 overflow-hidden">
+            {/* Source Code Editor */}
+            <div 
+              className="h-full pr-2"
+              style={{ width: `${sourceWidth}%` }}
+            >
               <EditorPane
                 ref={sourceEditorRef}
                 title="Source Code"
                 language={language}
                 value={sourceCode}
                 onChange={setSourceCode}
-                theme={editorTheme}
               />
             </div>
             
-            <div className="flex-1">
+            {/* Inner splitter */}
+            <div 
+              className="w-2 bg-base-300 cursor-col-resize flex items-center justify-center hover:bg-primary transition-colors"
+              onMouseDown={startInnerDrag}
+            >
+              <div className="w-1 h-8 bg-base-content bg-opacity-20 rounded-full"></div>
+            </div>
+            
+            {/* Formatted Code Editor */}
+            <div 
+              className="h-full pl-2"
+              style={{ width: `${100 - sourceWidth}%` }}
+            >
               <EditorPane
                 ref={formattedEditorRef}
                 title="Formatted Code"
                 language={language}
                 value={formattedCode}
                 readOnly
-                theme={editorTheme}
               />
             </div>
           </div>
