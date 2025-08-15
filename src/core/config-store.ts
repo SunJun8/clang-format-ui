@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { clangFormatConfig, ClangFormatConfig } from '../core/formatter'
+import { clangFormatConfig, ClangFormatConfig } from './formatter'
 
 export interface ConfigState {
   config: ClangFormatConfig
