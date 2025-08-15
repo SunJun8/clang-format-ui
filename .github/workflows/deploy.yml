@@ -27,10 +27,13 @@ jobs:
       run: |
         npm run build
         # Verify WASM files are present
-        if [ ! -f "dist/assets/clang-format-*.wasm" ]; then
+        if ! ls dist/assets/clang-format-*.wasm 1> /dev/null 2>&1; then
           echo "ERROR: clang-format WASM file not found in build output"
+          echo "Contents of dist/assets/:"
+          ls -la dist/assets/
           exit 1
         fi
+        echo "WASM file found: $(ls dist/assets/clang-format-*.wasm)"
 
     - name: Test build artifacts
       run: |
