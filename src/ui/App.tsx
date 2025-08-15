@@ -1,34 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useConfigStore } from '../core/config-store'
 import { formatCode, configToYaml } from '../core/formatter'
-import EditorPane from './components/EditorPane'
+import EditorPane, { EditorPaneRef } from './components/EditorPane'
 import ConfigPanel from './components/ConfigPanel'
 import Header from './components/Header'
 import { MONACO_THEMES } from '../core/themes'
+import { getDefaultExample } from './examples'
 
 const App: React.FC = () => {
   const { config } = useConfigStore()
-  const [sourceCode, setSourceCode] = useState<string>(
-    `#include <iostream>
-#include <vector>
-
-int main() {
-for (int i = 0; i < 10; i++) {
-if (i % 2 == 0) {
-std::cout << i << " is even" << std::endl;
-} else {
-std::cout << i << " is odd" << std::endl;
-}
-}
-return 0;
-}`
-  )
+  const [sourceCode, setSourceCode] = useState<string>('')
   const [formattedCode, setFormattedCode] = useState<string>('')
   const [language, setLanguage] = useState<'cpp' | 'c'>('cpp')
+  const [exampleLevel, setExampleLevel] = useState<'basic' | 'advanced'>('basic')
   const [editorTheme, setEditorTheme] = useState<string>('GitHub Dark')
   const [leftWidth, setLeftWidth] = useState<number>(66.66) // 默认左侧占2/3宽度
   const [isDragging, setIsDragging] = useState<boolean>(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const sourceEditorRef = useRef<EditorPaneRef>(null)
+  const formattedEditorRef = useRef<EditorPaneRef>(null)
+  const isScrollSyncing = useRef<boolean>(false)
+
+  // Initialize source code based on language and example level
+  useEffect(() => {
+    setSourceCode(getDefaultExample(language, exampleLevel))
+  }, [language, exampleLevel])
 
   // Format code when source code or config changes
   useEffect(() => {
@@ -45,6 +41,52 @@ return 0;
     const timer = setTimeout(format, 300)
     return () => clearTimeout(timer)
   }, [sourceCode, config])
+
+  // 滚动同步逻辑
+  useEffect(() => {
+    const sourceEditor = sourceEditorRef.current?.getEditor()
+    const formattedEditor = formattedEditorRef.current?.getEditor()
+
+    if (!sourceEditor || !formattedEditor) return
+
+    const handleSourceScroll = () => {
+      if (isScrollSyncing.current) return
+      isScrollSyncing.current = true
+
+      const scrollTop = sourceEditor.getScrollTop()
+      const scrollLeft = sourceEditor.getScrollLeft()
+      
+      formattedEditor.setScrollTop(scrollTop)
+      formattedEditor.setScrollLeft(scrollLeft)
+
+      setTimeout(() => {
+        isScrollSyncing.current = false
+      }, 50)
+    }
+
+    const handleFormattedScroll = () => {
+      if (isScrollSyncing.current) return
+      isScrollSyncing.current = true
+
+      const scrollTop = formattedEditor.getScrollTop()
+      const scrollLeft = formattedEditor.getScrollLeft()
+      
+      sourceEditor.setScrollTop(scrollTop)
+      sourceEditor.setScrollLeft(scrollLeft)
+
+      setTimeout(() => {
+        isScrollSyncing.current = false
+      }, 50)
+    }
+
+    sourceEditor.onDidScrollChange(handleSourceScroll)
+    formattedEditor.onDidScrollChange(handleFormattedScroll)
+
+    return () => {
+      // 清理事件监听器
+      // 注意：Monaco Editor的dispose方法会自动清理所有事件监听器
+    }
+  }, [formattedCode])
 
   
   const handleDownload = () => {
@@ -143,6 +185,34 @@ return 0;
           </div>
           
           <div className="flex items-center mb-4">
+            <span className="mr-4 font-semibold">Example Level:</span>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text mr-2">Basic</span>
+                <input
+                  type="radio"
+                  name="exampleLevel"
+                  className="radio radio-primary"
+                  checked={exampleLevel === 'basic'}
+                  onChange={() => setExampleLevel('basic')}
+                />
+              </label>
+            </div>
+            <div className="form-control ml-4">
+              <label className="label cursor-pointer">
+                <span className="label-text mr-2">Advanced</span>
+                <input
+                  type="radio"
+                  name="exampleLevel"
+                  className="radio radio-primary"
+                  checked={exampleLevel === 'advanced'}
+                  onChange={() => setExampleLevel('advanced')}
+                />
+              </label>
+            </div>
+          </div>
+          
+          <div className="flex items-center mb-4">
             <span className="mr-4 font-semibold">Theme:</span>
             <div className="form-control w-full max-w-xs">
               <select 
@@ -160,6 +230,7 @@ return 0;
           <div className="flex flex-col flex-1 overflow-hidden">
             <div className="flex-1 mb-4">
               <EditorPane
+                ref={sourceEditorRef}
                 title="Source Code"
                 language={language}
                 value={sourceCode}
@@ -170,6 +241,7 @@ return 0;
             
             <div className="flex-1">
               <EditorPane
+                ref={formattedEditorRef}
                 title="Formatted Code"
                 language={language}
                 value={formattedCode}

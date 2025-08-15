@@ -1,6 +1,10 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import * as monaco from 'monaco-editor'
 import { useMonacoEditor, updateEditorTheme } from '../hooks/useMonacoEditor'
+
+export interface EditorPaneRef {
+  getEditor: () => monaco.editor.IStandaloneCodeEditor | null
+}
 
 interface EditorPaneProps {
   title: string
@@ -11,14 +15,14 @@ interface EditorPaneProps {
   theme?: string
 }
 
-const EditorPane: React.FC<EditorPaneProps> = ({
+const EditorPane = forwardRef<EditorPaneRef, EditorPaneProps>(({
   title,
   language,
   value,
   onChange,
   readOnly = false,
   theme = 'GitHub Dark'
-}) => {
+}, ref) => {
   const editorRef = useRef<HTMLDivElement>(null)
   const { editorRef: monacoEditorRef } = useMonacoEditor(editorRef as React.RefObject<HTMLDivElement>, {
     value,
@@ -37,6 +41,11 @@ const EditorPane: React.FC<EditorPaneProps> = ({
       horizontal: 'auto'
     }
   })
+
+  // 暴露editor实例给父组件
+  useImperativeHandle(ref, () => ({
+    getEditor: () => monacoEditorRef.current
+  }))
 
   // 只在非只读模式下使用onChange
   useEffect(() => {
@@ -81,6 +90,8 @@ const EditorPane: React.FC<EditorPaneProps> = ({
       <div ref={editorRef} className="flex-1 min-h-[200px]" />
     </div>
   )
-}
+})
+
+EditorPane.displayName = 'EditorPane'
 
 export default EditorPane
